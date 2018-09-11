@@ -1,18 +1,20 @@
 import numpy as np
 import re
 import word2vec
+
+
 # import itertools
 # from collections import Counter
 # import codecs
 
 class w2v_wrapper:
-     def __init__(self,file_path):
+    def __init__(self, file_path):
         # w2v_file = os.path.join(base_path, "vectors_poem.bin")
         self.model = word2vec.load(file_path)
-        if 'unknown' not  in self.model.vocab_hash:
-            unknown_vec = np.random.uniform(-0.1,0.1,size=128)
+        if 'unknown' not in self.model.vocab_hash:
+            unknown_vec = np.random.uniform(-0.1, 0.1, size=128)
             self.model.vocab_hash['unknown'] = len(self.model.vocab)
-            self.model.vectors = np.row_stack((self.model.vectors,unknown_vec))
+            self.model.vectors = np.row_stack((self.model.vectors, unknown_vec))
 
 
 def clean_str(string):
@@ -36,12 +38,12 @@ def clean_str(string):
     return string.strip().lower()
 
 
-def removezero( x, y):
+def removezero(x, y):
     nozero = np.nonzero(y)
-    print('removezero',np.shape(nozero)[-1],len(y))
+    print('removezero', np.shape(nozero)[-1], len(y))
 
-    if(np.shape(nozero)[-1] == len(y)):
-        return np.array(x),np.array(y)
+    if (np.shape(nozero)[-1] == len(y)):
+        return np.array(x), np.array(y)
 
     y = np.array(y)[nozero]
     x = np.array(x)
@@ -49,12 +51,12 @@ def removezero( x, y):
     return x, y
 
 
-def read_file_lines(filename,from_size,line_num):
+def read_file_lines(filename, from_size, line_num):
     i = 0
     text = []
     end_num = from_size + line_num
     for line in open(filename):
-        if(i >= from_size):
+        if (i >= from_size):
             text.append(line.strip())
 
         i += 1
@@ -64,8 +66,7 @@ def read_file_lines(filename,from_size,line_num):
     return text
 
 
-
-def load_data_and_labels(filepath,max_size = -1):
+def load_data_and_labels(filepath, max_size=-1):
     """
     Loads MR polarity data from files, splits the data into words and generates labels.
     Returns split sentences and labels.
@@ -73,28 +74,31 @@ def load_data_and_labels(filepath,max_size = -1):
     # Load data from files
     train_datas = []
 
-    with open(filepath, 'r', encoding='utf-8',errors='ignore') as f:
+    with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
         train_datas = f.readlines()
 
-    one_hot_labels = []
+    y = []
     x_datas = []
     for line in train_datas:
-        parts = line.split('\t',1)
-        if(len(parts[1].strip()) == 0):
+        parts = line.split('\t', 1)
+        if (len(parts[1].strip()) == 0):
             continue
 
         x_datas.append(parts[1])
-        if parts[0].startswith('0') :
-            one_hot_labels.append([0,1])
-        else:
-            one_hot_labels.append([1,0])
+        y.append([parts[0]])
 
-    print (' data size = ' ,len(train_datas))
+    from sklearn.preprocessing import OneHotEncoder
+
+    enc = OneHotEncoder()
+    y=enc.fit_transform(y).toarray()
+
+
+    print(' data size = ', len(train_datas))
 
     # Split by words
     # x_text = [clean_str(sent) for sent in x_text]
 
-    return [x_datas, np.array(one_hot_labels)]
+    return [x_datas, y]
 
 
 def batch_iter(data, batch_size, num_epochs, shuffle=True):
@@ -103,7 +107,7 @@ def batch_iter(data, batch_size, num_epochs, shuffle=True):
     """
     data = np.array(data)
     data_size = len(data)
-    num_batches_per_epoch = int((len(data)-1)/batch_size) + 1
+    num_batches_per_epoch = int((len(data) - 1) / batch_size) + 1
     for epoch in range(num_epochs):
         # Shuffle the data at each epoch
         if shuffle:
@@ -119,20 +123,21 @@ def batch_iter(data, batch_size, num_epochs, shuffle=True):
             yield shuffled_data[start_index:end_index]
 
 
-def get_text_idx(text,vocab,max_document_length):
-    text_array = np.zeros([len(text), max_document_length],dtype=np.int32)
+def get_text_idx(text, vocab, max_document_length):
+    text_array = np.zeros([len(text), max_document_length], dtype=np.int32)
 
-    for i,x in  enumerate(text):
+    for i, x in enumerate(text):
         words = x.split(" ")
         for j, w in enumerate(words):
             if w in vocab:
                 text_array[i, j] = vocab[w]
-            else :
+            else:
                 text_array[i, j] = vocab['unknown']
 
     return text_array
 
 
 if __name__ == "__main__":
-    x_text, y = load_data_and_labels('F:\BaiduYunDownload\SentimentAnalysis\corpus_ch\cutclean_stopword_corpus10000.txt')
-    print (len(x_text))
+    x_text, y = load_data_and_labels(
+        'F:\BaiduYunDownload\SentimentAnalysis\corpus_ch\cutclean_stopword_corpus10000.txt')
+    print(len(x_text))

@@ -1,13 +1,13 @@
 #! /usr/bin/env python
-#coding=utf-8
+# coding=utf-8
 
 import tensorflow as tf
 import numpy as np
 import os
 import time
 import datetime
-import data_input_helper as data_helpers
-from text_cnn import TextCNN
+import sentiment_analysis_textcnn.textcnn.data_input_helper as data_helpers
+from sentiment_analysis_textcnn.textcnn.text_cnn import TextCNN
 import math
 from tensorflow.contrib import learn
 
@@ -17,7 +17,8 @@ from tensorflow.contrib import learn
 # Data loading params
 tf.flags.DEFINE_float("dev_sample_percentage", .1, "Percentage of the training data to use for validation")
 # tf.flags.DEFINE_string("train_data_file", "/var/proj/sentiment_analysis/data/cutclean_tiny_stopword_corpus10000.txt", "Data source for the positive data.")
-tf.flags.DEFINE_string("train_data_file", "../data/cutclean_label_corpus10000.txt", "Data source for the positive data.")
+tf.flags.DEFINE_string("train_data_file", "../data/cutclean_label_corpus10000.txt",
+                       "Data source for the positive data.")
 tf.flags.DEFINE_string("train_label_data_file", "", "Data source for the label data.")
 tf.flags.DEFINE_string("w2v_file", "../data/vectors.bin", "w2v_file path")
 # Model Hyperparameters
@@ -38,13 +39,14 @@ tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device 
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
 
 FLAGS = tf.flags.FLAGS
-FLAGS._parse_flags()
+import sys
+
+FLAGS(sys.argv)
+
 print("\nParameters:")
 for attr, value in sorted(FLAGS.__flags.items()):
     print("{}={}".format(attr.upper(), value))
 print("")
-
-
 
 
 def load_data(w2v_model):
@@ -57,23 +59,26 @@ def load_data(w2v_model):
     #     break
 
     max_document_length = max([len(x.split(" ")) for x in x_text])
-    print ('len(x) = ',len(x_text),' ',len(y))
-    print(' max_document_length = ' , max_document_length)
+    print('len(x) = ', len(x_text), ' ', len(y))
+    print(' max_document_length = ', max_document_length)
 
     x = []
     vocab_size = 0
-    if(w2v_model is None):
-      vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length)
-      x = np.array(list(vocab_processor.fit_transform(x_text)))
-      vocab_size = len(vocab_processor.vocabulary_)
 
-      # out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs", str(int(time.time()))))
-      vocab_processor.save("vocab.txt")
-      print( 'save vocab.txt')
+    if (w2v_model is None):
+        vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length)
+        x = np.array(list(vocab_processor.fit_transform(x_text)))
+        vocab_size = len(vocab_processor.vocabulary_)
+
+        # out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs", str(int(time.time()))))
+        vocab_processor.save("vocab.txt")
+        print('save vocab.txt')
     else:
-      x = data_helpers.get_text_idx(x_text,w2v_model.vocab_hash,max_document_length)
-      vocab_size = len(w2v_model.vocab_hash)
-      print('use w2v .bin')
+        x = data_helpers.get_text_idx(x_text, w2v_model.vocab_hash, max_document_length)
+        vocab_size = len(w2v_model.vocab_hash)
+        print('use w2v .bin')
+
+
 
     np.random.seed(10)
     shuffle_indices = np.random.permutation(np.arange(len(y)))
@@ -84,17 +89,17 @@ def load_data(w2v_model):
     x_train, x_dev = x_shuffled[:dev_sample_index], x_shuffled[dev_sample_index:]
     y_train, y_dev = y_shuffled[:dev_sample_index], y_shuffled[dev_sample_index:]
 
-    return x_train,x_dev,y_train,y_dev,vocab_size
+    return x_train, x_dev, y_train, y_dev, vocab_size
 
 
 def train(w2v_model):
     # Training
     # ==================================================
-    x_train, x_dev, y_train, y_dev ,vocab_size= load_data(w2v_model)
+    x_train, x_dev, y_train, y_dev, vocab_size = load_data(w2v_model)
     with tf.Graph().as_default():
         session_conf = tf.ConfigProto(
-          allow_soft_placement=FLAGS.allow_soft_placement,
-          log_device_placement=FLAGS.log_device_placement)
+            allow_soft_placement=FLAGS.allow_soft_placement,
+            log_device_placement=FLAGS.log_device_placement)
         sess = tf.Session(config=session_conf)
         with sess.as_default():
             cnn = TextCNN(
@@ -160,9 +165,9 @@ def train(w2v_model):
                 A single training step
                 """
                 feed_dict = {
-                  cnn.input_x: x_batch,
-                  cnn.input_y: y_batch,
-                  cnn.dropout_keep_prob: FLAGS.dropout_keep_prob
+                    cnn.input_x: x_batch,
+                    cnn.input_y: y_batch,
+                    cnn.dropout_keep_prob: FLAGS.dropout_keep_prob
                 }
                 # _, step, summaries, loss, accuracy,(w,idx) = sess.run(
                 #     [train_op, global_step, train_summary_op, cnn.loss, cnn.accuracy,cnn.get_w2v_W()],
@@ -176,15 +181,14 @@ def train(w2v_model):
                 # print w[:2],idx[:2]
                 train_summary_writer.add_summary(summaries, step)
 
-
             def dev_step(x_batch, y_batch, writer=None):
                 """
                 Evaluates model on a dev set
                 """
                 feed_dict = {
-                  cnn.input_x: x_batch,
-                  cnn.input_y: y_batch,
-                  cnn.dropout_keep_prob: 1.0
+                    cnn.input_x: x_batch,
+                    cnn.input_y: y_batch,
+                    cnn.dropout_keep_prob: 1.0
                 }
                 step, summaries, loss, accuracy = sess.run(
                     [global_step, dev_summary_op, cnn.loss, cnn.accuracy],
@@ -197,7 +201,6 @@ def train(w2v_model):
             # Generate batches
             batches = data_helpers.batch_iter(
                 list(zip(x_train, y_train)), FLAGS.batch_size, FLAGS.num_epochs)
-
 
             def dev_test():
                 batches_dev = data_helpers.batch_iter(list(zip(x_dev, y_dev)), FLAGS.batch_size, 1)
@@ -215,12 +218,13 @@ def train(w2v_model):
                     print("\nEvaluation:")
                     dev_test()
 
-
                 if current_step % FLAGS.checkpoint_every == 0:
                     path = saver.save(sess, checkpoint_prefix, global_step=current_step)
                     print("Saved model checkpoint to {}\n".format(path))
 
 
-if __name__ == "__main__":  
+if __name__ == "__main__":
+    # tf.flags.DEFINE_string("w2v_.toarray()file", "../data/vectors.bin", "w2v_file path")
     w2v_wr = data_helpers.w2v_wrapper(FLAGS.w2v_file)
+    # w2v_wr.model=None
     train(w2v_wr.model)

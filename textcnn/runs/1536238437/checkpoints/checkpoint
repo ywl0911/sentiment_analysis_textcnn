@@ -1,6 +1,0 @@
-model_checkpoint_path: "/home/ywl/Documents/python/sentiment_analysis_textcnn/textcnn/runs/1536238437/checkpoints/model-1400"
-all_model_checkpoint_paths: "/home/ywl/Documents/python/sentiment_analysis_textcnn/textcnn/runs/1536238437/checkpoints/model-1000"
-all_model_checkpoint_paths: "/home/ywl/Documents/python/sentiment_analysis_textcnn/textcnn/runs/1536238437/checkpoints/model-1100"
-all_model_checkpoint_paths: "/home/ywl/Documents/python/sentiment_analysis_textcnn/textcnn/runs/1536238437/checkpoints/model-1200"
-all_model_checkpoint_paths: "/home/ywl/Documents/python/sentiment_analysis_textcnn/textcnn/runs/1536238437/checkpoints/model-1300"
-all_model_checkpoint_paths: "/home/ywl/Documents/python/sentiment_analysis_textcnn/textcnn/runs/1536238437/checkpoints/model-1400"

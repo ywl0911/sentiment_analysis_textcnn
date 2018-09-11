@@ -30,7 +30,7 @@ tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularization lambda (default: 
 
 # Training parameters
 tf.flags.DEFINE_integer("batch_size", 64, "Batch Size (default: 64)")
-tf.flags.DEFINE_integer("num_epochs", 3, "Number of training epochs (default: 200)")
+tf.flags.DEFINE_integer("num_epochs", 5, "Number of training epochs (default: 200)")
 tf.flags.DEFINE_integer("evaluate_every", 50, "Evaluate model on dev set after this many steps (default: 100)")
 tf.flags.DEFINE_integer("checkpoint_every", 100, "Save model after this many steps (default: 100)")
 tf.flags.DEFINE_integer("num_checkpoints", 5, "Number of checkpoints to store (default: 5)")
@@ -200,7 +200,8 @@ def train(w2v_model):
             batches = data_helpers.batch_iter(list(zip(x_train, y_train)), FLAGS.batch_size, FLAGS.num_epochs)
 
             def dev_test():
-                batches_dev = data_helpers.batch_iter(list(zip(x_dev, y_dev)), FLAGS.batch_size, 1)
+                batches_dev = data_helpers.batch_iter(list(zip(x_dev, y_dev)), batch_size=FLAGS.batch_size,
+                                                      num_epochs=1)
                 for batch_dev in batches_dev:
                     x_batch_dev, y_batch_dev = zip(*batch_dev)
                     dev_step(x_batch_dev, y_batch_dev, writer=dev_summary_writer)

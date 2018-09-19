@@ -23,15 +23,14 @@ class TextCNN(object):
         l2_loss = tf.constant(0.0)
 
         # Embedding layer
-        # with tf.device('/cpu:0'), \
-        with tf.name_scope("embedding"):
+        with tf.device('/cpu:0'), tf.name_scope("embedding"):
             if w2v_model is None:
                 self.W = tf.Variable(
                     tf.random_uniform([vocab_size, embedding_size], -1.0, 1.0),
                     name="word_embeddings")
             else:
                 self.W = tf.get_variable("word_embeddings", initializer=w2v_model.vectors.astype(np.float32),
-                                         trainable=False)
+                                         trainable=True)
             # trainable=False表示词向量不随训练更新
             self.embedded_chars = tf.nn.embedding_lookup(self.W, self.input_x)
             self.embedded_chars_expanded = tf.expand_dims(self.embedded_chars, -1)

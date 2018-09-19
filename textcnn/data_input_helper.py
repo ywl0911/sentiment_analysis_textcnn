@@ -1,6 +1,7 @@
 import numpy as np
 import re
 import word2vec
+import gensim
 
 
 # import itertools
@@ -10,11 +11,20 @@ import word2vec
 class w2v_wrapper:
     def __init__(self, file_path):
         # w2v_file = os.path.join(base_path, "vectors_poem.bin")
-        self.model = word2vec.load(file_path)
-        if 'unknown' not in self.model.vocab_hash:
-            unknown_vec = np.random.uniform(-0.1, 0.1, size=128)
-            self.model.vocab_hash['unknown'] = len(self.model.vocab)
-            self.model.vectors = np.row_stack((self.model.vectors, unknown_vec))
+        # self.model = word2vec.load(file_path)
+        self.a = gensim.models.KeyedVectors.load_word2vec_format(file_path, binary=True)
+
+        self.vocabulary_length = len(self.a.wv.index2word)
+        self.vocab_hash = dict(zip(self.a.wv.index2word, range(self.vocabulary_length)))
+        self.vectors = self.a.wv.vectors
+
+        if 'unknown' not in self.vocab_hash.keys():
+            unknown_vec = np.random.uniform(-0.1, 0.1, size=self.vectors.shape[1])
+            self.vocab_hash['unknown'] = self.vocabulary_length
+
+            self.vectors = np.row_stack((self.vectors, unknown_vec))
+
+        del self.a
 
 
 def clean_str(string):
@@ -90,8 +100,7 @@ def load_data_and_labels(filepath, max_size=-1):
     from sklearn.preprocessing import OneHotEncoder
 
     enc = OneHotEncoder()
-    y=enc.fit_transform(y).toarray()
-
+    y = enc.fit_transform(y).toarray()
 
     print(' data size = ', len(train_datas))
 
@@ -127,7 +136,7 @@ def get_text_idx(text, vocab, max_document_length):
     text_array = np.zeros([len(text), max_document_length], dtype=np.int32)
 
     for i, x in enumerate(text):
-        words = x.split(" ")
+        words = x.split(" ")[:max_document_length]
         for j, w in enumerate(words):
             if w in vocab:
                 text_array[i, j] = vocab[w]

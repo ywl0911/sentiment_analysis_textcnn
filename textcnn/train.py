@@ -58,7 +58,11 @@ def load_data(w2v_model):
     #     l = len(x.split(" "))
     #     break
 
-    max_document_length = max([len(x.split(" ")) for x in x_text])
+    x_test_size_list = [len(x.split(" ")) for x in x_text]
+    x_test_size_list_sorted = sorted(x_test_size_list)
+
+    max_document_length = x_test_size_list_sorted[int(len(x_test_size_list_sorted)*0.98)]
+
     print('len(x) = ', len(x_text), ' ', len(y))
     print(' max_document_length = ', max_document_length)
 
@@ -225,4 +229,4 @@ if __name__ == "__main__":
     # tf.flags.DEFINE_string("w2v_.toarray()file", "../data/vectors.bin", "w2v_file path")
     w2v_wr = data_helpers.w2v_wrapper(FLAGS.w2v_file)
     # w2v_wr.model=None
-    train(w2v_wr.model)
+    train(w2v_wr)

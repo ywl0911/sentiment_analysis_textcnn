@@ -28,7 +28,7 @@ tf.flags.DEFINE_string("w2v_file", "../data/vectors.bin", "w2v_file path")
 
 # Eval Parameters
 tf.flags.DEFINE_integer("batch_size", 64, "Batch Size (default: 64)")
-tf.flags.DEFINE_string("checkpoint_dir", "./runs/1536659871/checkpoints/", "Checkpoint directory from training run")
+tf.flags.DEFINE_string("checkpoint_dir", "./runs/1536826843/checkpoints/", "Checkpoint directory from training run")
 tf.flags.DEFINE_boolean("eval_train", True, "Evaluate on all training data")
 
 # Misc Parameters
@@ -54,7 +54,11 @@ def load_data(w2v_model, max_document_length=1290):
     y_test = np.argmax(y_test, axis=1)
 
     if (max_document_length == 0):
-        max_document_length = max([len(x.split(" ")) for x in x_text])
+        # max_document_length = max([len(x.split(" ")) for x in x_text])
+        x_test_size_list = [len(x.split(" ")) for x in x_text]
+        x_test_size_list_sorted = sorted(x_test_size_list)
+
+        max_document_length = x_test_size_list_sorted[int(len(x_test_size_list_sorted) * 0.98)]
 
     print('max_document_length = ', max_document_length)
 
@@ -86,7 +90,7 @@ def eval(w2v_model):
             # Tensors we want to evaluate
             predictions = graph.get_operation_by_name("output/predictions").outputs[0]
 
-            x_test, y_test = load_data(w2v_model, 1290)
+            x_test, y_test = load_data(w2v_model, max_document_length=0)
             # Generate batches for one epoch
             batches = data_helpers.batch_iter(list(x_test), FLAGS.batch_size, 1, shuffle=False)
 
@@ -114,4 +118,4 @@ def eval(w2v_model):
 
 if __name__ == "__main__":
     w2v_wr = data_helpers.w2v_wrapper(FLAGS.w2v_file)
-    eval(w2v_wr.model)
+    eval(w2v_wr)
